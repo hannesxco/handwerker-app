@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandwerkerHub - Handwerker in der Nähe</title>
+    <meta name="description" content="Finden und buchen Sie Handwerker in Ihrer Nähe - von Sanitär bis Elektrik">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- Apple PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="HandwerkerHub">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192/2563eb/ffffff?text=HH">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="https://via.placeholder.com/32x32/2563eb/ffffff?text=HH" type="image/png">
+    
+    <!-- React und Babel CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.5/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f9fafb;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Hide scrollbar but keep functionality */
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Custom button animations */
+        .btn-pulse:hover {
+            animation: pulse 0.5s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="loading mb-4"></div>
+                <p class="text-gray-600">HandwerkerHub wird geladen...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+
+        // Lucide Icons
+        const Search = lucide.Search;
+        const Star = lucide.Star;
+        const MapPin = lucide.MapPin;
+        const Clock = lucide.Clock;
+        const Phone = lucide.Phone;
+        const AlertTriangle = lucide.AlertTriangle;
+        const Filter = lucide.Filter;
+        const User = lucide.User;
+        const Home = lucide.Home;
+        const Calendar = lucide.Calendar;
+        const Menu = lucide.Menu;
+
+        const HandwerkerApp = () => {
+            const [currentView, setCurrentView] = useState('home');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [selectedCategory, setSelectedCategory] = useState('alle');
+            const [showFilters, setShowFilters] = useState(false);
+            const [priorityMode, setPriorityMode] = useState(false);
+            const [selectedHandwerker, setSelectedHandwerker] = useState(null);
+
+            // Mock-Daten für Handwerker
+            const [handwerker] = useState([
+                {
+                    id: 1,
+                    name: "Müller Sanitär GmbH",
+                    category: "sanitär",
+                    rating: 4.8,
+                    reviews: 127,
+                    priceRange: "€€€",
+                    distance: "0.8 km",
+                    available: true,
+                    emergencyService: true,
+                    responseTime: "15 min",
+                    services: ["Rohrbruch", "Heizung", "Badinstallation"],
+                    phone: "+49 421 123456",
+                    image: "🔧"
+                },
+                {
+                    id: 2,
+                    name: "Elektro Schmidt",
+                    category: "elektrik",
+                    rating: 4.6,
+                    reviews: 89,
+                    priceRange: "€€",
+                    distance: "1.2 km",
+                    available: false,
+                    emergencyService: true,
+                    responseTime: "30 min",
+                    services: ["Stromausfall", "Installation", "Reparatur"],
+                    phone: "+49 421 654321",
+                    image: "⚡"
+                },
+                {
+                    id: 3,
+                    name: "Malermeister Weber",
+                    category: "maler",
+                    rating: 4.9,
+                    reviews: 203,
+                    priceRange: "€€",
+                    distance: "2.1 km",
+                    available: true,
+                    emergencyService: false,
+                    responseTime: "2 Std",
+                    services: ["Innenmalerei", "Fassade", "Tapezieren"],
+                    phone: "+49 421 789012",
+                    image: "🎨"
+                },
+                {
+                    id: 4,
+                    name: "Zimmerei Hoffmann",
+                    category: "zimmerei",
+                    rating: 4.7,
+                    reviews: 156,
+                    priceRange: "€€€€",
+                    distance: "3.4 km",
+                    available: true,
+                    emergencyService: true,
+                    responseTime: "45 min",
+                    services: ["Dachschäden", "Holzbau", "Reparaturen"],
+                    phone: "+49 421 345678",
+                    image: "🔨"
+                }
+            ]);
+
+            const categories = [
+                { id: 'alle', name: 'Alle', icon: '🏠' },
+                { id: 'sanitär', name: 'Sanitär', icon: '🚰' },
+                { id: 'elektrik', name: 'Elektrik', icon: '⚡' },
+                { id: 'maler', name: 'Maler', icon: '🎨' },
+                { id: 'zimmerei', name: 'Zimmerei', icon: '🔨' },
+                { id: 'heizung', name: 'Heizung', icon: '🔥' }
+            ];
+
+            const filteredHandwerker = handwerker.filter(h => {
+                const matchesSearch = h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                    h.services.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+                const matchesCategory = selectedCategory === 'alle' || h.category === selectedCategory;
+                const matchesPriority = !priorityMode || h.emergencyService;
+                return matchesSearch && matchesCategory && matchesPriority;
+            });
+
+            const renderStars = (rating) => {
+                return Array.from({ length: 5 }, (_, i) => (
+                    React.createElement(Star, {
+                        key: i,
+                        className: `w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`
+                    })
+                ));
+            };
+
+            const renderHome = () => (
+                React.createElement('div', { className: "flex-1 bg-gray-50" },
+                    React.createElement('div', { className: "bg-blue-600 text-white p-4" },
+                        React.createElement('div', { className: "flex items-center justify-between mb-4" },
+                            React.createElement('h1', { className: "text-xl font-bold" }, "HandwerkerHub"),
+                            React.createElement('button', {
+                                onClick: () => setPriorityMode(!priorityMode),
+                                className: `flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors btn-pulse ${
+                                    priorityMode 
+                                        ? 'bg-red-500 text-white' 
+                                        : 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
+                                }`
+                            },
+                                React.createElement(AlertTriangle, { className: "w-4 h-4" }),
+                                priorityMode ? 'Notfall AKTIV' : 'Notfall'
+                            )
+                        ),
+                        React.createElement('div', { className: "relative" },
+                            React.createElement(Search, { className: "absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" }),
+                            React.createElement('input', {
+                                type: "text",
+                                placeholder: "Handwerker oder Service suchen...",
+                                value: searchQuery,
+                                onChange: (e) => setSearchQuery(e.target.value),
+                                className: "w-full pl-10 pr-4 py-3 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            })
+                        )
+                    ),
+
+                    priorityMode && React.createElement('div', { className: "bg-red-50 border-l-4 border-red-500 p-4 m-4 rounded" },
+                        React.createElement('div', { className: "flex items-center" },
+                            React.createElement(AlertTriangle, { className: "w-5 h-5 text-red-500 mr-2" }),
+                            React.createElement('p', { className: "text-red-700 font-medium" }, "Notfall-Modus aktiviert - Nur Handwerker mit Notdienst werden angezeigt")
+                        )
+                    ),
+
+                    React.createElement('div', { className: "p-4" },
+                        React.createElement('h2', { className: "text-lg font-semibold mb-3" }, "Kategorien"),
+                        React.createElement('div', { className: "flex gap-3 overflow-x-auto pb-2 hide-scrollbar" },
+                            categories.map(cat => (
+                                React.createElement('button', {
+                                    key: cat.id,
+                                    onClick: () => setSelectedCategory(cat.id),
+                                    className: `flex flex-col items-center min-w-16 p-3 rounded-lg transition-colors btn-pulse ${
+                                        selectedCategory === cat.id 
+                                            ? 'bg-blue-100 border-2 border-blue-500' 
+                                            : 'bg-white border border-gray-200'
+                                    }`
+                                },
+                                    React.createElement('span', { className: "text-2xl mb-1" }, cat.icon),
+                                    React.createElement('span', { className: "text-xs font-medium" }, cat.name)
+                                )
+                            ))
+                        )
+                    ),
+
+                    React.createElement('div', { className: "px-4 pb-20" },
+                        React.createElement('div', { className: "flex items-center justify-between mb-3" },
+                            React.createElement('h2', { className: "text-lg font-semibold" },
+                                priorityMode ? 'Notfall-Handwerker' : 'Handwerker in der Nähe'
+                            ),
+                            React.createElement('span', { className: "text-sm text-gray-500" }, `${filteredHandwerker.length} gefunden`)
+                        ),
+                        
+                        React.createElement('div', { className: "space-y-3" },
+                            filteredHandwerker.map(h => (
+                                React.createElement('div', {
+                                    key: h.id,
+                                    className: "bg-white rounded-lg p-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow",
+                                    onClick: () => setSelectedHandwerker(h)
+                                },
+                                    React.createElement('div', { className: "flex items-start gap-3" },
+                                        React.createElement('div', { className: "text-3xl" }, h.image),
+                                        
+                                        React.createElement('div', { className: "flex-1" },
+                                            React.createElement('div', { className: "flex items-start justify-between mb-2" },
+                                                React.createElement('div', null,
+                                                    React.createElement('h3', { className: "font-semibold text-gray-800" }, h.name),
+                                                    React.createElement('div', { className: "flex items-center gap-2 text-sm text-gray-600" },
+                                                        React.createElement(MapPin, { className: "w-4 h-4" }),
+                                                        React.createElement('span', null, h.distance),
+                                                        React.createElement('span', null, "•"),
+                                                        React.createElement('span', null, h.priceRange)
+                                                    )
+                                                ),
+                                                
+                                                React.createElement('div', { className: "flex items-center gap-1" },
+                                                    React.createElement('span', { className: "text-sm font-medium" }, h.rating),
+                                                    React.createElement('div', { className: "flex" }, renderStars(h.rating)),
+                                                    React.createElement('span', { className: "text-xs text-gray-500" }, `(${h.reviews})`)
+                                                )
+                                            ),
+                                            
+                                            React.createElement('div', { className: "flex flex-wrap gap-2 mb-2" },
+                                                h.services.slice(0, 3).map((service, idx) => (
+                                                    React.createElement('span', {
+                                                        key: idx,
+                                                        className: "px-2 py-1 bg-gray-100 text-xs rounded text-gray-600"
+                                                    }, service)
+                                                ))
+                                            ),
+                                            
+                                            React.createElement('div', { className: "flex items-center justify-between" },
+                                                React.createElement('div', { className: "flex items-center gap-4 text-sm" },
+                                                    React.createElement('div', { className: "flex items-center gap-1" },
+                                                        React.createElement(Clock, { className: "w-4 h-4 text-gray-400" }),
+                                                        React.createElement('span', { className: "text-gray-600" }, h.responseTime)
+                                                    ),
+                                                    
+                                                    React.createElement('div', { className: `flex items-center gap-1 ${h.available ? 'text-green-600' : 'text-red-600'}` },
+                                                        React.createElement('div', { className: `w-2 h-2 rounded-full ${h.available ? 'bg-green-500' : 'bg-red-500'}` }),
+                                                        React.createElement('span', { className: "text-sm font-medium" }, h.available ? 'Verfügbar' : 'Beschäftigt')
+                                                    ),
+                                                    
+                                                    h.emergencyService && React.createElement('div', { className: "flex items-center gap-1 text-orange-600" },
+                                                        React.createElement(AlertTriangle, { className: "w-4 h-4" }),
+                                                        React.createElement('span', { className: "text-sm font-medium" }, "Notdienst")
+                                                    )
+                                                ),
+                                                
+                                                React.createElement('button', {
+                                                    className: `px-4 py-2 rounded-lg text-sm font-medium transition-colors btn-pulse ${
+                                                        h.available 
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                    }`,
+                                                    disabled: !h.available
+                                                },
+                                                    h.available ? 'Buchen' : 'Nicht verfügbar'
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ))
+                        )
+                    )
+                )
+            );
+
+            const renderProfile = () => (
+                React.createElement('div', { className: "flex-1 bg-gray-50 p-4" },
+                    React.createElement('h2', { className: "text-xl font-bold mb-4" }, "Mein Profil"),
+                    React.createElement('div', { className: "bg-white rounded-lg p-4 shadow-sm" },
+                        React.createElement('div', { className: "flex items-center gap-3 mb-4" },
+                            React.createElement('div', { className: "w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center" },
+                                React.createElement(User, { className: "w-8 h-8 text-blue-600" })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('h3', { className: "font-semibold" }, "Max Mustermann"),
+                                React.createElement('p', { className: "text-gray-600" }, "max.mustermann@email.com")
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: "space-y-3" },
+                            React.createElement('div', { className: "flex justify-between items-center p-3 bg-gray-50 rounded" },
+                                React.createElement('span', null, "Meine Buchungen"),
+                                React.createElement('span', { className: "text-blue-600 font-medium" }, "5")
+                            ),
+                            React.createElement('div', { className: "flex justify-between items-center p-3 bg-gray-50 rounded" },
+                                React.createElement('span', null, "Bewertungen abgegeben"),
+                                React.createElement('span', { className: "text-blue-600 font-medium" }, "3")
+                            ),
+                            React.createElement('div', { className: "flex justify-between items-center p-3 bg-gray-50 rounded" },
+                                React.createElement('span', null, "Favoriten"),
+                                React.createElement('span', { className: "text-blue-600 font-medium" }, "2")
+                            )
+                        )
+                    )
+                )
+            );
+
+            const renderBookings = () => (
+                React.createElement('div', { className: "flex-1 bg-gray-50 p-4" },
+                    React.createElement('h2', { className: "text-xl font-bold mb-4" }, "Meine Buchungen"),
+                    React.createElement('div', { className: "space-y-3" },
+                        [
+                            { id: 1, handwerker: "Müller Sanitär GmbH", service: "Rohrbruch Reparatur", date: "Heute, 14:30", status: "aktiv" },
+                            { id: 2, handwerker: "Elektro Schmidt", service: "Lichtschalter Installation", date: "Gestern", status: "abgeschlossen" },
+                            { id: 3, handwerker: "Malermeister Weber", service: "Wohnzimmer streichen", date: "15.07.2024", status: "bewertet" }
+                        ].map(booking => (
+                            React.createElement('div', { key: booking.id, className: "bg-white rounded-lg p-4 shadow-sm" },
+                                React.createElement('div', { className: "flex justify-between items-start mb-2" },
+                                    React.createElement('div', null,
+                                        React.createElement('h3', { className: "font-semibold" }, booking.handwerker),
+                                        React.createElement('p', { className: "text-gray-600 text-sm" }, booking.service)
+                                    ),
+                                    React.createElement('span', {
+                                        className: `px-2 py-1 rounded text-xs font-medium ${
+                                            booking.status === 'aktiv' ? 'bg-blue-100 text-blue-800' :
+                                            booking.status === 'abgeschlossen' ? 'bg-green-100 text-green-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`
+                                    },
+                                        booking.status === 'aktiv' ? 'Aktiv' : 
+                                        booking.status === 'abgeschlossen' ? 'Abgeschlossen' : 'Bewertet'
+                                    )
+                                ),
+                                React.createElement('p', { className: "text-sm text-gray-500" }, booking.date)
+                            )
+                        ))
+                    )
+                )
+            );
+
+            return React.createElement('div', { className: "max-w-md mx-auto bg-white min-h-screen flex flex-col" },
+                currentView === 'home' && renderHome(),
+                currentView === 'bookings' && renderBookings(),
+                currentView === 'profile' && renderProfile(),
+
+                React.createElement('div', { className: "fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200" },
+                    React.createElement('div', { className: "flex justify-around py-2" },
+                        [
+                            { id: 'home', icon: Home, label: 'Home' },
+                            { id: 'bookings', icon: Calendar, label: 'Buchungen' },
+                            { id: 'profile', icon: User, label: 'Profil' }
+                        ].map(({ id, icon: Icon, label }) => (
+                            React.createElement('button', {
+                                key: id,
+                                onClick: () => setCurrentView(id),
+                                className: `flex flex-col items-center py-2 px-4 transition-colors btn-pulse ${
+                                    currentView === id ? 'text-blue-600' : 'text-gray-600'
+                                }`
+                            },
+                                React.createElement(Icon, { className: "w-6 h-6" }),
+                                React.createElement('span', { className: "text-xs mt-1" }, label)
+                            )
+                        ))
+                    )
+                ),
+
+                selectedHandwerker && React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-50 flex items-end z-50" },
+                    React.createElement('div', { className: "bg-white w-full rounded-t-xl max-h-96 overflow-y-auto" },
+                        React.createElement('div', { className: "p-4" },
+                            React.createElement('div', { className: "flex justify-between items-start mb-4" },
+                                React.createElement('div', { className: "flex items-center gap-3" },
+                                    React.createElement('span', { className: "text-3xl" }, selectedHandwerker.image),
+                                    React.createElement('div', null,
+                                        React.createElement('h3', { className: "font-bold text-lg" }, selectedHandwerker.name),
+                                        React.createElement('div', { className: "flex items-center gap-2 text-sm text-gray-600" },
+                                            React.createElement(MapPin, { className: "w-4 h-4" }),
+                                            React.createElement('span', null, selectedHandwerker.distance)
+                                        )
+                                    )
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => setSelectedHandwerker(null),
+                                    className: "text-gray-500 hover:text-gray-700"
+                                }, "✕")
+                            ),
+
+                            React.createElement('div', { className: "space-y-4" },
+                                React.createElement('div', { className: "flex items-center gap-2" },
+                                    React.createElement('div', { className: "flex" }, renderStars(selectedHandwerker.rating)),
+                                    React.createElement('span', { className: "font-medium" }, selectedHandwerker.rating),
+                                    React.createElement('span', { className: "text-gray-500" }, `(${selectedHandwerker.reviews} Bewertungen)`)
+                                ),
+
+                                React.createElement('div', { className: "flex gap-2 flex-wrap" },
+                                    selectedHandwerker.services.map((service, idx) => (
+                                        React.createElement('span', {
+                                            key: idx,
+                                            className: "px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                                        }, service)
+                                    ))
+                                ),
+
+                                React.createElement('div', { className: "flex items-center justify-between p-3 bg-gray-50 rounded" },
+                                    React.createElement('div', { className: "flex items-center gap-2" },
+                                        React.createElement(Clock, { className: "w-5 h-5 text-gray-600" }),
+                                        React.createElement('span', null, `Antwortzeit: ${selectedHandwerker.responseTime}`)
+                                    ),
+                                    React.createElement('div', { className: `flex items-center gap-2 ${selectedHandwerker.available ? 'text-green-600' : 'text-red-600'}` },
+                                        React.createElement('div', { className: `w-3 h-3 rounded-full ${selectedHandwerker.available ? 'bg-green-500' : 'bg-red-500'}` }),
+                                        React.createElement('span', null, selectedHandwerker.available ? 'Verfügbar' : 'Beschäftigt')
+                                    )
+                                ),
+
+                                React.createElement('div', { className: "flex gap-3" },
+                                    React.createElement('button', { className: "flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors btn-pulse" },
+                                        React.createElement(Phone, { className: "w-5 h-5" }),
+                                        "Anrufen"
+                                    ),
+                                    React.createElement('button', {
+                                        className: `flex-1 py-3 rounded-lg font-medium transition-colors btn-pulse ${
+                                            selectedHandwerker.available 
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        }`,
+                                        disabled: !selectedHandwerker.available
+                                    },
+                                        selectedHandwerker.available ? 'Jetzt buchen' : 'Nicht verfügbar'
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        // Service Worker registrieren für PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registriert: ', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('ServiceWorker Registrierung fehlgeschlagen: ', error);
+                    });
+            });
+        }
+
+        // App rendern
+        const root = createRoot(document.getElementById('root'));
+        root.render(React.createElement(HandwerkerApp));
+    </script>
+</body>
+</html>
