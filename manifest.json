@@ -1,0 +1,70 @@
+{
+  "name": "HandwerkerHub - Handwerker in der Nähe",
+  "short_name": "HandwerkerHub",
+  "description": "Finden und buchen Sie Handwerker in Ihrer Nähe - von Sanitär bis Elektrik",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "de",
+  "categories": ["business", "utilities"],
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/72x72/2563eb/ffffff?text=HH",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/96x96/2563eb/ffffff?text=HH",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/128x128/2563eb/ffffff?text=HH",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/144x144/2563eb/ffffff?text=HH",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/152x152/2563eb/ffffff?text=HH",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/192x192/2563eb/ffffff?text=HH",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://via.placeholder.com/384x384/2563eb/ffffff?text=HH",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/2563eb/ffffff?text=HH",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://via.placeholder.com/390x844/f3f4f6/1f2937?text=HandwerkerHub%0AScreenshot",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
